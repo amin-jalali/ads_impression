@@ -1,0 +1,84 @@
+# System files
+.DS_Store
+._*
+.nfs.*
+
+# Go build artifacts
+*.o
+*.so
+*.a
+*.pyc
+*.exe
+*.orig
+*.rej
+core
+*.cgo*.go
+*.cgo*.c
+_cgo_*
+_obj
+_test
+_testmain.go
+
+# Output files
+[56789a].out
+*~
+*.swp
+test.out
+/test/garbage/*.out
+/test/pass.out
+/test/run.out
+/test/times.out
+
+# Go build cache and binaries
+/bin/
+/pkg/
+/build.out
+
+# Go tools cache
+/VERSION.cache
+/goinstall.log
+/last-change
+
+# Go standard library artifacts
+/doc/articles/wiki/*.bin
+/misc/cgo/life/run.out
+/misc/cgo/stdio/run.out
+/misc/cgo/testso/main
+/src/cmd/cgo/zdefaultcc.go
+/src/cmd/dist/dist
+/src/cmd/go/internal/cfg/zdefaultcc.go
+/src/cmd/internal/objabi/zbootstrap.go
+/src/go/build/zcgo.go
+/src/go/doc/headscan
+/src/internal/buildcfg/zbootstrap.go
+/src/internal/runtime/sys/zversion.go
+/src/unicode/maketables
+/src/time/tzdata/zzipdata.go
+
+# IDE and editor-related files
+.idea/                   # JetBrains IDE project files
+*.iml                    # IntelliJ-based IDEs module files
+*.ipr                    # IntelliJ IDEA project files
+*.iws                    # IntelliJ IDEA workspace files
+out/                     # JetBrains output directory
+/.run/                   # GoLand Run Configurations
+/.vscode/                # Visual Studio Code settings
+*.sw?                    # Vim swap files
+*.swo
+*.swn
+
+# Debug and profiling files
+*.prof                   # Profiling data
+*.trace                  # Tracing data
+
+# Dependency management
+/vendor/                 # Go vendor directory (if not checked in)
+go.sum                   # Go modules checksum file (if not explicitly needed)
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Exclude compiled test binaries
+*_test

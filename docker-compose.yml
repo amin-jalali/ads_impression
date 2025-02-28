@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+
+  goapp:
+    image: golang:1.21
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - TTL=3600
+    command: ["/root/main"]
+    restart: always
+  test:
+    image: golang:1.21
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: [ "go", "test", "-coverpkg=./...", "./..." ]
+    depends_on:
+      - goapp

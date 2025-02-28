@@ -1,0 +1,92 @@
+# Configuration for golangci-lint
+# More options: https://golangci-lint.run/usage/configuration/
+
+# Exclude generated files, vendor, and testdata
+exclude:
+  - "generated"
+  - "vendor"
+  - "testdata"
+
+run:
+  # Timeout for linting (useful for large projects)
+  timeout: 5m
+  # Return non-zero exit code if issues are found
+  issues-exit-code: 1
+  # Run linters in parallel (improves performance)
+  concurrency: 4
+  # Run only fast linters
+  allow-parallel-runners: true
+
+# Linters Configuration
+linters:
+  enable:
+    - govet          # Reports suspicious constructs (e.g., incorrect format strings)
+    - errcheck       # Checks for unchecked errors
+    - staticcheck    # Advanced static analysis
+    - gosimple       # Finds simplifications in Go code
+    - unused         # Checks for unused code
+    - ineffassign    # Detects ineffectual assignments
+    - gocritic       # Finds bugs and style issues
+    - typecheck      # Detects incorrect type usage
+    - depguard       # Restricts use of particular packages
+    - misspell       # Finds commonly misspelled words
+    - gofmt          # Enforces proper formatting
+    - goimports      # Ensures proper import sorting
+    - revive         # A more configurable linter replacing `golint`
+    - nolintlint     # Ensures correct usage of `nolint` comments
+
+  disable:
+    - scopelint      # Reports unnecessary variable scopes
+    - lll            # Line length linter (handled by formatting)
+    - cyclop         # Reports complex functions (optional)
+    - gochecknoglobals  # Disallows global variables (can be restrictive)
+    - funlen         # Limits function length (optional)
+
+# Linters Settings
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    check-shadowing: true
+
+  gofmt:
+    simplify: true
+
+  goimports:
+    local-prefixes: "your_project_name"
+
+  revive:
+    severity: warning
+    rules:
+      - name: indent-error-flow
+        disabled: false
+      - name: var-naming
+        disabled: false
+
+  staticcheck:
+    checks: ["all"]
+
+# Configuration for issues output
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 5
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - govet
+    - linters:
+        - depguard
+      text: "should not use"
+  exclude-use-default: false
+
+# Configuration for file path-based exclusions
+path:
+  ignore:
+    - "vendor"
+    - "third_party"
+    - "mock"
+    - "generated"
+    - "testdata"
