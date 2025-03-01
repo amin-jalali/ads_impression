@@ -10,8 +10,15 @@ func main() {
 	logger.InitLogger()
 	defer logger.Sync()
 
-	srv := &http.Server{Addr: ":8081"}
-	err := server.Run(srv.ListenAndServe)
+	port, err := server.GetEnv("port")
+
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return
+	}
+
+	srv := &http.Server{Addr: ":" + port}
+	err = server.Run(srv.ListenAndServe)
 	if err != nil {
 		logger.Log.Error(err.Error())
 	}
