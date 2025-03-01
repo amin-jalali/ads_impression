@@ -7,6 +7,8 @@ import (
 	"regexp"
 )
 
+var validIDRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-]+$`).MatchString
+
 func (s *Server) GetCampaignStatsHandler(w http.ResponseWriter, r *http.Request) {
 	campaignID := r.URL.Path[len("/api/v1/campaigns/"):]
 
@@ -17,9 +19,7 @@ func (s *Server) GetCampaignStatsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Validate campaign ID
-	validID := regexp.MustCompile(`^[a-zA-Z0-9\-]+$`).MatchString
-	if decodedID == "" || len(decodedID) < 8 || !validID(decodedID) {
+	if decodedID == "" || len(decodedID) < 8 || !validIDRegexp(decodedID) {
 		s.Logger.Error("Invalid campaign ID")
 		http.Error(w, "Invalid campaign ID", http.StatusBadRequest)
 		return

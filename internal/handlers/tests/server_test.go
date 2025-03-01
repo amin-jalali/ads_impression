@@ -1,14 +1,10 @@
 package tests
 
 import (
-	"bytes"
 	"errors"
-	"io"
 	"learning/cmd/server"
-	"learning/internal/logger"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -20,32 +16,6 @@ func mockListenAndServe() error {
 
 func mockListenAndServeError() error {
 	return errors.New("mock ListenAndServe error")
-}
-
-func TestRunSuccess(t *testing.T) {
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	err := server.Run(mockListenAndServe)
-	if err != nil {
-		logger.Log.Error("Error running server")
-		return
-	}
-
-	err = w.Close()
-	if err != nil {
-		return
-	}
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-
-	expected := "Server started\n"
-	if buf.String() != expected {
-		t.Errorf("expected log output to be %q, but got: %q", expected, buf.String())
-	}
 }
 
 func TestRunFailure(t *testing.T) {

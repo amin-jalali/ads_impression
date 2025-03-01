@@ -1,13 +1,19 @@
 package server
 
-import (
-	"errors"
-	"os"
-)
+import "github.com/ilyakaznacheev/cleanenv"
 
-func GetEnv(key string) (error, string) {
-	if value := os.Getenv(key); value != "" {
-		return nil, value
+// ConfigEnv holds environment variables
+type ConfigEnv struct {
+	Value string `env:"KEY"`
+}
+
+// GetEnv retrieves an environment variable using Cleanenv
+func GetEnv(key string) (string, error) {
+	var cfg ConfigEnv
+
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		return "", err
 	}
-	return errors.New("env is not set"), ""
+
+	return cfg.Value, nil
 }

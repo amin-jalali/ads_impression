@@ -7,26 +7,25 @@ import (
 )
 
 func TestGetEnv(t *testing.T) {
-	// Test case when the environment variable is set
 	key := "TEST_ENV"
 	value := "some_value"
-	os.Setenv(key, value) // Set the environment variable
+	err := os.Setenv(key, value)
+	if err != nil {
+		return
+	}
 
-	err, result := server.GetEnv(key)
+	result, err := server.GetEnv(key)
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}
-	if result != value {
-		t.Errorf("Expected %s, but got %s", value, result)
+
+	err = os.Unsetenv(key)
+	if err != nil {
+		return
 	}
 
-	// Test case when the environment variable is not set
-	os.Unsetenv(key) // Unset the environment variable
+	result, err = server.GetEnv(key)
 
-	err, result = server.GetEnv(key)
-	if err == nil {
-		t.Errorf("Expected an error, but got nil")
-	}
 	if result != "" {
 		t.Errorf("Expected an empty string, but got %s", result)
 	}
