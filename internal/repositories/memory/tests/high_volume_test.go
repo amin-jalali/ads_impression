@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"learning/internal/entities"
-	"learning/internal/logger"
-	"learning/internal/repositories/memory/handlers"
+	handlers2 "learning/internal/handlers"
+	"learning/internal/repositories/memory"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -15,23 +15,33 @@ import (
 )
 
 func TestHighVolumeConcurrentRequests(t *testing.T) {
-	s := handlers.NewServer()
+	// Initialize in-memory repositories
+	campaignRepo := memory.NewInMemoryCampaignRepository()
+	impressionRepo := memory.NewInMemoryImpressionRepository(nil)
+	statsRepo := memory.NewInMemoryStatsRepository()
+
+	// Inject repositories into handlers
+	campaignHandler := handlers2.NewCampaignHandler(campaignRepo)
+	impressionHandler := handlers2.NewImpressionHandler(impressionRepo)
+	statsHandler := handlers2.NewStatsHandler(statsRepo)
+
 	var wg sync.WaitGroup
 
+	// Step 1: Create a new campaign
 	campaignReq := entities.CreateCampaignRequest{Name: "High Volume Campaign", StartTime: time.Now()}
 	jsonCampaign, _ := json.Marshal(campaignReq)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/campaigns", bytes.NewBuffer(jsonCampaign))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
-	s.CreateCampaignHandler(resp, req)
+	campaignHandler.CreateCampaignHandler(resp, req)
 
+	// Decode response to get the campaign ID
 	var campaign entities.Campaign
-	err := json.NewDecoder(resp.Body).Decode(&campaign)
-	if err != nil {
-		logger.Log.Error("invalid request. unable to decode")
-		return
+	if err := json.NewDecoder(resp.Body).Decode(&campaign); err != nil {
+		t.Fatalf("Failed to decode campaign response: %v", err)
 	}
 
+	// Step 2: Send concurrent impression requests
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func(userID string) {
@@ -41,24 +51,25 @@ func TestHighVolumeConcurrentRequests(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/api/v1/impressions", bytes.NewBuffer(jsonImp))
 			request.Header.Set("Content-Type", "application/json")
 			response := httptest.NewRecorder()
-			s.TrackImpressionHandler(response, request)
+			impressionHandler.TrackImpressionHandler(response, request)
 		}(fmt.Sprintf("user%d", i))
 	}
 
 	wg.Wait()
 
+	// Step 3: Retrieve campaign stats
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/campaigns/"+campaign.ID, nil)
 	resp = httptest.NewRecorder()
-	s.GetCampaignStatsHandler(resp, req)
+	statsHandler.GetCampaignStatsHandler(resp, req)
 
+	// Decode response to get the stats
 	var stats entities.Stats
-	err = json.NewDecoder(resp.Body).Decode(&stats)
-	if err != nil {
-		logger.Log.Error("invalid request. unable to decode")
-		return
+	if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
+		t.Fatalf("Failed to decode stats response: %v", err)
 	}
 
+	// Step 4: Validate results
 	if stats.TotalCount != 100 {
-		t.Errorf("expected total count 100, got %d", stats.TotalCount)
+		t.Errorf("Expected total count 100, got %d", stats.TotalCount)
 	}
 }

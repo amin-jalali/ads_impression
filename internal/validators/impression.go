@@ -7,14 +7,14 @@ import (
 	"net/http"
 )
 
-func ValidateCreateCampaign(r *http.Request) (*entities.CreateCampaignRequest, error) {
-	var req entities.CreateCampaignRequest
+func ValidateTrackImpression(r *http.Request) (*entities.TrackImpressionRequest, error) {
+	var req entities.TrackImpressionRequest
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(&req); err != nil {
-		return nil, errors.New("invalid JSON payload")
+		return nil, errors.New("invalid JSON format")
 	}
 
 	// Use shared validate instance

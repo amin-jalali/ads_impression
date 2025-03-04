@@ -15,9 +15,9 @@ type InMemoryImpressionRepository struct {
 	stats       map[string]entities.Stats
 }
 
-func NewInMemoryImpressionRepository() *InMemoryImpressionRepository {
+func NewInMemoryImpressionRepository(sharedCampaigns map[string]entities.Campaign) *InMemoryImpressionRepository {
 	return &InMemoryImpressionRepository{
-		campaigns:   make(map[string]entities.Campaign),
+		campaigns:   sharedCampaigns, // Share storage with campaign repository
 		impressions: make(map[string]map[string]time.Time),
 		stats:       make(map[string]entities.Stats),
 	}
@@ -27,7 +27,7 @@ func (r *InMemoryImpressionRepository) TrackImpression(req entities.TrackImpress
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// Check if campaign exists
+	// Ensure campaign exists
 	if _, exists := r.campaigns[req.CampaignID]; !exists {
 		return errors.New("campaign not found"), http.StatusNotFound
 	}
@@ -35,12 +35,12 @@ func (r *InMemoryImpressionRepository) TrackImpression(req entities.TrackImpress
 	now := time.Now()
 	lastImpression, seen := r.impressions[req.CampaignID][req.UserID]
 
-	// Prevent duplicate impressions within TTL
+	// Enforce TTL for impressions (1 hour)
 	if seen && now.Sub(lastImpression) < time.Hour {
 		return errors.New("duplicate impression"), http.StatusOK
 	}
 
-	// Update impression data
+	// Store impression
 	if r.impressions[req.CampaignID] == nil {
 		r.impressions[req.CampaignID] = make(map[string]time.Time)
 	}

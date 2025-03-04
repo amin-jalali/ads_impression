@@ -9,6 +9,7 @@ func main() {
 	//lgr := logger.InitLogger()
 
 	port, err := server.GetEnv("port")
+	port = "8080"
 
 	if err != nil {
 		//logger.Log.Error(err.Error())

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"learning/handlers"
+	handlers2 "learning/internal/handlers"
 	"learning/internal/logger"
 	"learning/internal/repositories/memory"
 	"net/http"
@@ -17,17 +17,17 @@ func setupServer() http.Handler {
 	//s := memory.NewServer()
 
 	campaignRepo := memory.NewInMemoryCampaignRepository()
-	impressionRepo := memory.NewInMemoryImpressionRepository()
+	impressionRepo := memory.NewInMemoryImpressionRepository(nil)
 	statsRepo := memory.NewInMemoryStatsRepository()
 
-	campaignHandler := handlers.NewCampaignHandler(campaignRepo)
-	impressionHandler := handlers.NewImpressionHandler(impressionRepo)
-	statsHandler := handlers.NewStatsHandler(statsRepo)
+	campaignHandler := handlers2.NewCampaignHandler(campaignRepo)
+	impressionHandler := handlers2.NewImpressionHandler(impressionRepo)
+	statsHandler := handlers2.NewStatsHandler(statsRepo)
 
 	mux.HandleFunc("/api/v1/campaigns", campaignHandler.CreateCampaignHandler)
 	mux.HandleFunc("/api/v1/impressions", impressionHandler.TrackImpressionHandler)
 	mux.HandleFunc("/api/v1/campaigns/", statsHandler.GetCampaignStatsHandler)
-	mux.HandleFunc("/", handlers.NotFoundHandler)
+	mux.HandleFunc("/", handlers2.NotFoundHandler)
 
 	return mux
 }

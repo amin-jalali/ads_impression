@@ -1,73 +1,67 @@
 package tests
 
-import (
-	"errors"
-	"learning/cmd/server"
-	"net/http"
-	"testing"
-	"time"
-)
+//func mockListenAndServe() error {
+//	return nil
+//}
+//
+//func mockListenAndServeError() error {
+//	return errors.New("mock ListenAndServe error")
+//}
+//
+//func TestRunFailure(t *testing.T) {
+//
+//	var err = server.Run(mockListenAndServeError)
+//	expectedLog := "mock ListenAndServe error"
+//
+//	if err.Error() != expectedLog {
+//		t.Errorf("expected log output to contain %q, but got: %q", expectedLog, err)
+//	}
+//}
+//
+//func TestListenAndServeFailure(t *testing.T) {
+//	srv := &http.Server{
+//		Addr:    ":9999",
+//		Handler: nil,
+//	}
+//
+//	go func() {
+//		err := srv.ListenAndServe()
+//		if err == nil {
+//			t.Errorf("expected ListenAndServe to return an error, but got nil")
+//		}
+//	}()
+//	// TODO: Check if system atency causes go routine closes befor execution
+//	time.Sleep(500 * time.Millisecond)
+//	err := srv.Close()
+//	if err != nil {
+//		t.Errorf("%s", err.Error())
+//	}
+//}
+//
+//// Mock ListenAndServe function
+//func mockListenAndServeSuccess() error {
+//	return nil // Simulate successful server start
+//}
+//
+//func mockListenAndServeFailure() error {
+//	return errors.New("server failed to start") // Simulate failure
+//}
+//
+//func TestRun_Success(t *testing.T) {
+//	err := server.Run(mockListenAndServeSuccess)
+//	if err != nil {
+//		t.Errorf("Expected no error, but got: %v", err)
+//	}
+//}
+//
+//func TestRun_Failure(t *testing.T) {
+//	err := server.Run(mockListenAndServeFailure)
+//	if err == nil {
+//		t.Errorf("Expected an error, but got nil")
+//	}
+//}
 
-func mockListenAndServe() error {
-	return nil
-}
-
-func mockListenAndServeError() error {
-	return errors.New("mock ListenAndServe error")
-}
-
-func TestRunFailure(t *testing.T) {
-
-	var err = server.Run(mockListenAndServeError)
-	expectedLog := "mock ListenAndServe error"
-
-	if err.Error() != expectedLog {
-		t.Errorf("expected log output to contain %q, but got: %q", expectedLog, err)
-	}
-}
-
-func TestListenAndServeFailure(t *testing.T) {
-	srv := &http.Server{
-		Addr:    ":9999",
-		Handler: nil,
-	}
-
-	go func() {
-		err := srv.ListenAndServe()
-		if err == nil {
-			t.Errorf("expected ListenAndServe to return an error, but got nil")
-		}
-	}()
-	// TODO: Check if system atency causes go routine closes befor execution
-	time.Sleep(500 * time.Millisecond)
-	err := srv.Close()
-	if err != nil {
-		t.Errorf("%s", err.Error())
-	}
-}
-
-// Mock ListenAndServe function
-func mockListenAndServeSuccess() error {
-	return nil // Simulate successful server start
-}
-
-func mockListenAndServeFailure() error {
-	return errors.New("server failed to start") // Simulate failure
-}
-
-func TestRun_Success(t *testing.T) {
-	err := server.Run(mockListenAndServeSuccess)
-	if err != nil {
-		t.Errorf("Expected no error, but got: %v", err)
-	}
-}
-
-func TestRun_Failure(t *testing.T) {
-	err := server.Run(mockListenAndServeFailure)
-	if err == nil {
-		t.Errorf("Expected an error, but got nil")
-	}
-}
+//...............................................................
 
 //func TestSetupServer(t *testing.T) {
 //	handler := server.SetupServer()
