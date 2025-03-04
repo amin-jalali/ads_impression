@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"learning/internal/handlers"
+	"learning/internal/repositories/memory/handlers"
 	"net/http"
 	"net/http/httptest"
 	"net/url"

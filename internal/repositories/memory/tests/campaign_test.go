@@ -2,7 +2,7 @@ package tests
 
 import (
 	"bytes"
-	"learning/internal/handlers"
+	"learning/internal/repositories/memory/handlers"
 	"net/http"
 	"net/http/httptest"
 	"strings"

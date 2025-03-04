@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"learning/internal/handlers"
+	"learning/internal/entities"
 	"learning/internal/logger"
+	"learning/internal/repositories/memory/handlers"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -17,14 +18,14 @@ func TestHighVolumeConcurrentRequests(t *testing.T) {
 	s := handlers.NewServer()
 	var wg sync.WaitGroup
 
-	campaignReq := handlers.CreateCampaignRequest{Name: "High Volume Campaign", StartTime: time.Now()}
+	campaignReq := entities.CreateCampaignRequest{Name: "High Volume Campaign", StartTime: time.Now()}
 	jsonCampaign, _ := json.Marshal(campaignReq)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/campaigns", bytes.NewBuffer(jsonCampaign))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	s.CreateCampaignHandler(resp, req)
 
-	var campaign handlers.Campaign
+	var campaign entities.Campaign
 	err := json.NewDecoder(resp.Body).Decode(&campaign)
 	if err != nil {
 		logger.Log.Error("invalid request. unable to decode")
@@ -35,7 +36,7 @@ func TestHighVolumeConcurrentRequests(t *testing.T) {
 		wg.Add(1)
 		go func(userID string) {
 			defer wg.Done()
-			impReq := handlers.TrackImpressionRequest{CampaignID: campaign.ID, UserID: userID, AdID: "ad456"}
+			impReq := entities.TrackImpressionRequest{CampaignID: campaign.ID, UserID: userID, AdID: "ad456"}
 			jsonImp, _ := json.Marshal(impReq)
 			request := httptest.NewRequest(http.MethodPost, "/api/v1/impressions", bytes.NewBuffer(jsonImp))
 			request.Header.Set("Content-Type", "application/json")
@@ -50,7 +51,7 @@ func TestHighVolumeConcurrentRequests(t *testing.T) {
 	resp = httptest.NewRecorder()
 	s.GetCampaignStatsHandler(resp, req)
 
-	var stats handlers.Stats
+	var stats entities.Stats
 	err = json.NewDecoder(resp.Body).Decode(&stats)
 	if err != nil {
 		logger.Log.Error("invalid request. unable to decode")

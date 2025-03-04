@@ -1,14 +1,14 @@
 package tests
 
 import (
-	"learning/internal/handlers"
+	handlers2 "learning/internal/repositories/memory/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestNotFoundHandler(t *testing.T) {
-	_ = handlers.NewServer()
+	_ = handlers2.NewServer()
 
 	paths := []string{
 		"/invalid-route",
@@ -22,7 +22,7 @@ func TestNotFoundHandler(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, path, nil)
 			resp := httptest.NewRecorder()
 
-			handlers.NotFoundHandler(resp, req)
+			handlers2.NotFoundHandler(resp, req)
 
 			if resp.Code != http.StatusNotFound {
 				t.Errorf("expected status %d, got %d for path %s", http.StatusNotFound, resp.Code, path)
