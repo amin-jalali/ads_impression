@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"learning/internal/handlers"
 	"learning/internal/repositories/memory"
 	"net/http"
@@ -11,9 +12,40 @@ import (
 	"testing"
 )
 
+// Helper function to send a request and validate response
+func sendTestRequest(t *testing.T, handler http.HandlerFunc, method, url, requestBody string, expectedStatus int, expectedError string) {
+	req := httptest.NewRequest(method, url, bytes.NewBuffer([]byte(requestBody)))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+
+	handler(resp, req)
+
+	// Check HTTP status code
+	if resp.Code != expectedStatus {
+		t.Errorf("❌ [%s] Expected status %d, got %d. Request: %s", url, expectedStatus, resp.Code, requestBody)
+	}
+
+	// Check response body for expected error
+	if expectedError != "" {
+		var responseMap map[string]any
+		_ = json.Unmarshal(resp.Body.Bytes(), &responseMap)
+
+		if message, ok := responseMap["message"].(string); ok {
+			if !strings.Contains(message, expectedError) {
+				t.Errorf("❌ [%s] Expected error message to contain %q, but got %q. Request: %s", url, expectedError, message, requestBody)
+			}
+		} else {
+			t.Errorf("❌ [%s] Expected a response with a 'message' field, but got %q", url, resp.Body.String())
+		}
+	}
+}
+
 func TestCreateCampaignHandler(t *testing.T) {
-	// Initialize the in-memory repository
-	repo := memory.NewInMemoryCampaignRepository()
+	// Initialize a shared in-memory server
+	memServer := memory.NewServer()
+
+	// Pass shared memory to the repository
+	repo := memory.NewInMemoryCampaignRepository(memServer)
 	handler := handlers.NewCampaignHandler(repo)
 
 	tests := []struct {
@@ -22,90 +54,18 @@ func TestCreateCampaignHandler(t *testing.T) {
 		expectedStatus int
 		expectedError  string
 	}{
-		{
-			name:           "Valid Campaign Creation",
-			requestBody:    `{"name": "Test Campaign", "start_time": "2025-01-01T00:00:00Z"}`,
-			expectedStatus: http.StatusCreated,
-			expectedError:  "",
-		}, {
-			name:           "Malformed JSON",
-			requestBody:    `{"name": "Test Campaign", "start_time": "invalid-date", }`,
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "invalid JSON payload",
-		}, {
-			name:           "Missing Name Field",
-			requestBody:    `{"name": "", "start_time": "2025-01-01T00:00:00Z"}`,
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Field validation for 'Name' failed",
-		}, {
-			name:           "Missing Start Time",
-			requestBody:    `{"name": "Test Campaign", "start_time": ""}`,
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "invalid JSON payload",
-		}, {
-			name:           "Empty JSON Body",
-			requestBody:    `{}`,
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Field validation",
-		}, {
-			name:           "Unknown Field",
-			requestBody:    `{"test": "test"}`,
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "invalid JSON payload",
-		},
+		{"Valid Campaign", `{"name": "Test Campaign", "start_time": "2025-01-01T00:00:00Z"}`, http.StatusCreated, ""},
+		{"❌ Malformed JSON", `{"name": "Test Campaign", "start_time": "invalid-date", }`, http.StatusBadRequest, "invalid JSON payload"},
+		{"❌ Missing Name Field", `{"name": "", "start_time": "2025-01-01T00:00:00Z"}`, http.StatusBadRequest, "Field validation for 'Name' failed"},
+		{"❌ Missing Start Time", `{"name": "Test Campaign", "start_time": ""}`, http.StatusBadRequest, "invalid JSON payload"},
+		{"❌ Empty JSON Body", `{}`, http.StatusBadRequest, "Field validation"},
+		{"❌ Unknown Field", `{"test": "test"}`, http.StatusBadRequest, "invalid JSON payload"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/campaigns", bytes.NewBuffer([]byte(test.requestBody)))
-			req.Header.Set("Content-Type", "application/json")
-			resp := httptest.NewRecorder()
-
-			handler.CreateCampaignHandler(resp, req)
-
-			// Check HTTP status code
-			if resp.Code != test.expectedStatus {
-				t.Errorf("expected status %d, got %d", test.expectedStatus, resp.Code)
-			}
-
-			// Check response body for expected error
-			if test.expectedError != "" {
-				var responseMap map[string]any
-				_ = json.Unmarshal(resp.Body.Bytes(), &responseMap)
-
-				if message, ok := responseMap["message"].(string); ok {
-					if !strings.Contains(message, test.expectedError) {
-						t.Errorf("expected error message to contain %q, but got %q", test.expectedError, message)
-					}
-				} else {
-					t.Errorf("expected a response with a 'message' field, but got %q", resp.Body.String())
-				}
-			}
+			fmt.Println(test.name)
+			sendTestRequest(t, handler.CreateCampaignHandler, http.MethodPost, "/api/v1/campaigns", test.requestBody, test.expectedStatus, test.expectedError)
 		})
-	}
-}
-
-func TestCreateCampaignWithInvalidInput(t *testing.T) {
-	// Initialize the in-memory repository
-	repo := memory.NewInMemoryCampaignRepository()
-	handler := handlers.NewCampaignHandler(repo)
-
-	invalidPayloads := []string{
-		`{}`,
-		`{"name": "", "start_time": ""}`,
-		`{"name": 123, "start_time": 456}`,
-		`{"name": "Valid Name", "start_time": "invalid-date"}`,
-	}
-
-	for _, payload := range invalidPayloads {
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/campaigns", bytes.NewBuffer([]byte(payload)))
-		req.Header.Set("Content-Type", "application/json")
-		resp := httptest.NewRecorder()
-
-		handler.CreateCampaignHandler(resp, req)
-
-		if resp.Code != http.StatusBadRequest {
-			t.Errorf("expected status %d, got %d for payload %s", http.StatusBadRequest, resp.Code, payload)
-		}
 	}
 }

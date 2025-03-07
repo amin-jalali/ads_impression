@@ -3,35 +3,38 @@ package handlers
 import (
 	"learning/internal/repositories"
 	"learning/internal/utils"
-	"learning/internal/validators"
 	"net/http"
+	"strings"
 )
 
-// StatsHandler uses a generic repository
 type StatsHandler struct {
 	Repo repositories.StatsRepository
 }
 
-// NewStatsHandler Constructor function
 func NewStatsHandler(repo repositories.StatsRepository) *StatsHandler {
 	return &StatsHandler{Repo: repo}
 }
 
 func (h *StatsHandler) GetCampaignStatsHandler(w http.ResponseWriter, r *http.Request) {
-	// Validate campaign ID
-	campaignID, err := validators.ValidateCampaignID(r)
-	if err != nil {
-		utils.JSONError(w, err.Error(), http.StatusBadRequest)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Call repository to get stats
+	// Extract campaign ID from URL
+	campaignID := strings.TrimPrefix(r.URL.Path, "/api/v1/campaigns/stats/")
+	if campaignID == "" || campaignID == "/api/v1/campaigns/stats" {
+		utils.JSONError(w, "invalid campaign ID", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch stats
 	stats, exists := h.Repo.GetCampaignStats(campaignID)
 	if !exists {
-		utils.JSONError(w, "Campaign not found", http.StatusNotFound)
+		utils.JSONError(w, "campaign not found", http.StatusNotFound)
 		return
 	}
 
-	// Return campaign stats
+	// Return stats as JSON response
 	utils.JSONSuccess(w, stats, http.StatusOK)
 }

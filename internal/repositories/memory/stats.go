@@ -6,20 +6,22 @@ import (
 )
 
 type InMemoryStatsRepository struct {
-	mu    sync.Mutex
-	stats map[string]entities.Stats
+	mu     sync.Mutex
+	server *entities.Server // Add shared server instance
 }
 
-func NewInMemoryStatsRepository() *InMemoryStatsRepository {
+// NewInMemoryStatsRepository Accept shared `Server` instance
+func NewInMemoryStatsRepository(server *entities.Server) *InMemoryStatsRepository {
 	return &InMemoryStatsRepository{
-		stats: make(map[string]entities.Stats),
+		server: server, // Assign server instance
 	}
 }
 
+// GetCampaignStats Fetch stats from shared memory
 func (r *InMemoryStatsRepository) GetCampaignStats(campaignID string) (entities.Stats, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	stats, exists := r.stats[campaignID]
+	stats, exists := r.server.Stats[campaignID] // Fetch from shared memory
 	return stats, exists
 }

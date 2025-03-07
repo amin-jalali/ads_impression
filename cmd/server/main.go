@@ -1,33 +1,35 @@
 package server
 
 import (
-	handlers2 "learning/internal/handlers"
+	"learning/internal/handlers"
 	"learning/internal/logger"
 	"learning/internal/repositories/memory"
 	"net/http"
 )
-
-var ListenAndServe = http.ListenAndServe
 
 var SetupServer = setupServer
 
 func setupServer() http.Handler {
 	mux := http.NewServeMux()
 
-	//s := memory.NewServer()
+	// Initialize shared in-memory server
+	memServer := memory.NewServer()
 
-	campaignRepo := memory.NewInMemoryCampaignRepository()
-	impressionRepo := memory.NewInMemoryImpressionRepository(nil)
-	statsRepo := memory.NewInMemoryStatsRepository()
+	// Pass shared memory to repositories
+	campaignRepo := memory.NewInMemoryCampaignRepository(memServer)
+	impressionRepo := memory.NewInMemoryImpressionRepository(memServer)
+	statsRepo := memory.NewInMemoryStatsRepository(memServer)
 
-	campaignHandler := handlers2.NewCampaignHandler(campaignRepo)
-	impressionHandler := handlers2.NewImpressionHandler(impressionRepo)
-	statsHandler := handlers2.NewStatsHandler(statsRepo)
+	campaignHandler := handlers.NewCampaignHandler(campaignRepo)
+	impressionHandler := handlers.NewImpressionHandler(impressionRepo)
+	statsHandler := handlers.NewStatsHandler(statsRepo)
 
 	mux.HandleFunc("/api/v1/campaigns", campaignHandler.CreateCampaignHandler)
 	mux.HandleFunc("/api/v1/impressions", impressionHandler.TrackImpressionHandler)
-	mux.HandleFunc("/api/v1/campaigns/", statsHandler.GetCampaignStatsHandler)
-	mux.HandleFunc("/", handlers2.NotFoundHandler)
+	mux.HandleFunc("/api/v1/campaigns/stats/", func(w http.ResponseWriter, r *http.Request) {
+		statsHandler.GetCampaignStatsHandler(w, r)
+	})
+	mux.HandleFunc("/", handlers.NotFoundHandler)
 
 	return mux
 }
@@ -36,7 +38,7 @@ func Run(listenAndServe func() error) error {
 	logger.InitLogger()
 	defer logger.Sync()
 
-	logger.Log.Info("Server started ...")
+	logger.Log.Info("Server started on port 8080...")
 
 	err := listenAndServe()
 	if err != nil {

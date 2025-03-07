@@ -2,24 +2,22 @@ package memory
 
 import (
 	"errors"
+	"learning/cmd/config"
 	"learning/internal/entities"
+	logger2 "learning/internal/logger"
 	"net/http"
 	"sync"
 	"time"
 )
 
 type InMemoryImpressionRepository struct {
-	mu          sync.Mutex
-	campaigns   map[string]entities.Campaign
-	impressions map[string]map[string]time.Time
-	stats       map[string]entities.Stats
+	mu     sync.Mutex
+	server *entities.Server // Use shared server instance
 }
 
-func NewInMemoryImpressionRepository(sharedCampaigns map[string]entities.Campaign) *InMemoryImpressionRepository {
+func NewInMemoryImpressionRepository(server *entities.Server) *InMemoryImpressionRepository {
 	return &InMemoryImpressionRepository{
-		campaigns:   sharedCampaigns, // Share storage with campaign repository
-		impressions: make(map[string]map[string]time.Time),
-		stats:       make(map[string]entities.Stats),
+		server: server,
 	}
 }
 
@@ -27,31 +25,40 @@ func (r *InMemoryImpressionRepository) TrackImpression(req entities.TrackImpress
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// Ensure campaign exists
-	if _, exists := r.campaigns[req.CampaignID]; !exists {
+	// Ensure campaign exists in shared storage
+	if _, exists := r.server.Campaigns[req.CampaignID]; !exists {
 		return errors.New("campaign not found"), http.StatusNotFound
 	}
 
 	now := time.Now()
-	lastImpression, seen := r.impressions[req.CampaignID][req.UserID]
+	lastImpression, seen := r.server.Impressions[req.CampaignID][req.UserID]
+
+	cfg, err := config.LoadConfig()
+	logger := logger2.InitLogger()
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	// Read port from config and convert to string
+	ttl := cfg.App.TTL
 
 	// Enforce TTL for impressions (1 hour)
-	if seen && now.Sub(lastImpression) < time.Hour {
+	if seen && now.Sub(lastImpression) < time.Duration(ttl)*time.Second {
 		return errors.New("duplicate impression"), http.StatusOK
 	}
 
-	// Store impression
-	if r.impressions[req.CampaignID] == nil {
-		r.impressions[req.CampaignID] = make(map[string]time.Time)
+	// Store impression in shared memory
+	if r.server.Impressions[req.CampaignID] == nil {
+		r.server.Impressions[req.CampaignID] = make(map[string]time.Time)
 	}
-	r.impressions[req.CampaignID][req.UserID] = now
+	r.server.Impressions[req.CampaignID][req.UserID] = now
 
-	// Update stats
-	stats := r.stats[req.CampaignID]
+	// Update stats in shared memory
+	stats := r.server.Stats[req.CampaignID]
 	stats.LastHour++
 	stats.LastDay++
 	stats.TotalCount++
-	r.stats[req.CampaignID] = stats
+	r.server.Stats[req.CampaignID] = stats
 
 	return nil, http.StatusOK
 }
